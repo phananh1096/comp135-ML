@@ -1,0 +1,8 @@
+Name: Phan Nguyen (1182452)
+I spent roughly 7 hours on this problem (6 on Problem 1 and 1 on Problem 2)
+
+I sought help from TA Manh Duc Nguyen for question 1ai), 1f), and 2 and discussed theory, pseudocode, as well as revised matplotlib implementations of the different plot types with fellow students Michelle Luo and Stephanie Wong. 
+
+I asked Duc to go through the process of logistic regression and decision tree implementation.
+
+

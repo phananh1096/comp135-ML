@@ -1,0 +1,8 @@
+Name: Phan Nguyen (1182452)
+I spent roughly 10 hours on this problem (5 on Problem 1 and 4 on Problem 2 and 1 and Problem 3)
+
+I sought help from TA Manh Duc Nguyen for question 2,3 and discussed theory, pseudocode, as well as revised matplotlib implementations of the different plot types with fellow students Kate Zheng, Stephanie Wong. 
+
+I asked Duc to go through the implications of MAE and MSE on k-NN and Decision tree processes and how fit and predict algorithms are implemented.
+
+

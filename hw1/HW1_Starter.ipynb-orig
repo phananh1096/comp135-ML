@@ -1,0 +1,1242 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# COMP 135 Fall 2019: HW1 STARTER"
+   ]
+  },
+  {
+   "cell_type": "raw",
+   "metadata": {},
+   "source": [
+    "Student Name: Phan Anh Nguyen"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Setup comp135_env package imports"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "import numpy as np\n",
+    "import sklearn.neighbors\n",
+    "import sklearn.tree\n",
+    "\n",
+    "from matplotlib import pyplot as plt\n",
+    "import seaborn as sns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Setup student-defined imports"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from LeastSquaresLinearRegression import LeastSquaresLinearRegressor"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from evaluate_perf_metrics import (\n",
+    "    calc_perf_metric__absolute_error, calc_perf_metric__squared_error,\n",
+    "    calc_perf_metrics_for_regressor_on_dataset)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Load dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## TODO load all data (train/valid/test) into x_tr_NF, x_va_NF, x_te_NF, ..."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_tr_NF = np.loadtxt('data_abalone/y_train.csv', delimiter=',', skiprows=1)\n",
+    "y_va_NF = np.loadtxt('data_abalone/y_valid.csv', delimiter=',', skiprows=1)\n",
+    "y_te_NF = np.loadtxt('data_abalone/y_test.csv', delimiter=',', skiprows=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "x_tr_NF = np.loadtxt('data_abalone/x_train.csv', delimiter=',', skiprows=1)\n",
+    "x_va_NF = np.loadtxt('data_abalone/x_valid.csv', delimiter=',', skiprows=1)\n",
+    "x_te_NF = np.loadtxt('data_abalone/x_test.csv', delimiter=',', skiprows=1)\n",
+    "#np.loadtxt('data_abalone/x_train.csv', delimiter=',', skiprows=1, usecols = 2)\n",
+    "diam_mm_tr = x_tr_NF[:,2].copy()\n",
+    "diam_mm_va = x_va_NF[:,2].copy()\n",
+    "diam_mm_te = x_te_NF[:,2].copy()\n",
+    "#np.loadtxt('data_abalone/x_train.csv', delimiter=',', skiprows=1, usecols = 5)\n",
+    "shucked_weight_g_tr = x_tr_NF[:,5].copy()\n",
+    "shucked_weight_g_va = x_va_NF[:,5].copy()\n",
+    "shucked_weight_g_te = x_te_NF[:,5].copy()\n",
+    "feature2_tr = x_tr_NF[:,[2,5]].copy()\n",
+    "feature2_va = x_va_NF[:,[2,5]].copy()\n",
+    "feature2_te = x_te_NF[:,[2,5]].copy()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 1a : Abalone histograms of response variable 'rings'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1a(i): Produce one figure with three subplots, showing histograms of $y$ from train/valid/test"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/Users/phananh/.conda/envs/comp135_env/lib/python3.6/site-packages/scipy/stats/stats.py:1706: FutureWarning: Using a non-tuple sequence for multidimensional indexing is deprecated; use `arr[tuple(seq)]` instead of `arr[seq]`. In the future this will be interpreted as an array index, `arr[np.array(seq)]`, which will result either in an error or a different result.\n",
+      "  return np.add.reduce(sorted[indexer] * weights, axis=axis) / sumval\n"
+     ]
+    },
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 3 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "fig_h, axes_arr = plt.subplots(nrows=3, ncols=1, sharex=True)\n",
+    "sns.distplot(y_tr_NF, kde=False, rug=True, ax=axes_arr[0]);\n",
+    "sns.distplot(y_va_NF, kde=False, rug=True, ax=axes_arr[1]);\n",
+    "sns.distplot(y_te_NF, kde=False, rug=True, ax=axes_arr[2]);\n",
+    "\n",
+    "## TODO plot histograms on the axes\n",
+    "## e.g. sns.distplot(y_tr_N, kde=False, rug=True, ax=axes_arr[0]);\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1a(ii): Describe the **train** distribution. Unimodal or multimodal? What shape? Are there noticeable outliers?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**TODO ANSWER HERE**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1a(iii): Quantify train's descriptive statistics. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Minimum is:  1.0\n",
+      "Maximum is:  29.0\n",
+      "Median is:  9.0\n",
+      "Mean is:  9.902392947103275\n"
+     ]
+    }
+   ],
+   "source": [
+    "### TODO CODE HERE\n",
+    "minimum = np.min(y_tr_NF)\n",
+    "maximum = np.max(y_tr_NF)\n",
+    "median = np.median(y_tr_NF)\n",
+    "mean = np.mean(y_tr_NF)\n",
+    "print(\"Minimum is: \", minimum)\n",
+    "print(\"Maximum is: \", maximum)\n",
+    "print(\"Median is: \", median)\n",
+    "print(\"Mean is: \", mean)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 1b : Scatterplots of 'rings' vs 'diam' and 'rings' vs 'shucked'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1b(i):** Create figure with two subplots: scatter plot of `diam_mm` vs `rings` and scatter of `shucked_weight_g` vs `rings`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 2 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "## TODO CODE HERE\n",
+    "fig_h, scatter = plt.subplots(nrows=2, ncols=1, sharex=True)\n",
+    "diam_rings = sns.regplot(diam_mm_tr, y_tr_NF,ax=scatter[0])\n",
+    "shucked_weight_rings = sns.regplot(shucked_weight_g_tr, y_tr_NF,ax=scatter[1])\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1b(ii):** Describe the trends you between diameter and rings in a few sentences."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**TODO ANSWER HERE**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1b(iii): Describe the trends you see between shucked weight and rings.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**TODO ANSWER HERE**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Setup code for 1c"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Dummy class to perform \"always guess training mean\" prediction\n",
+    "class MeanPredictor():\n",
+    "    def __init__(self):\n",
+    "        self.yhat = None\n",
+    "    \n",
+    "    def fit(self, x_tr_NF, y_tr_N):\n",
+    "        self.yhat = np.mean(y_tr_N)\n",
+    "    \n",
+    "    def predict(self, x_NF):\n",
+    "        return self.yhat"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Dummy class to perform \"always guess training median\" prediction\n",
+    "class MedianPredictor():\n",
+    "    def __init__(self):\n",
+    "        self.yhat = None\n",
+    "    \n",
+    "    def fit(self, x_tr_NF, y_tr_N):\n",
+    "        self.yhat = np.median(y_tr_N)\n",
+    "    \n",
+    "    def predict(self, x_NF):\n",
+    "        return self.yhat"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[10.2744779] [10.94938356] [10.5646027]\n"
+     ]
+    }
+   ],
+   "source": [
+    "mean_value_predictor = MeanPredictor()\n",
+    "mean_value_predictor.fit(x_tr_NF,y_tr_NF)\n",
+    "## TODO fit the predictor, like mean_value_predictor.fit(x_tr_N2, y_tr_N)\n",
+    "predict_mean_tr = mean_value_predictor.predict(x_tr_NF)\n",
+    "predict_mean_va = mean_value_predictor.predict(x_va_NF)\n",
+    "predict_mean_te = mean_value_predictor.predict(x_te_NF)\n",
+    "\n",
+    "## TODO evaluate predictions on train, valid, and test\n",
+    "yhat_tr = np.full((y_tr_NF.shape[0],1),predict_mean_tr)\n",
+    "yhat_va = np.full((y_va_NF.shape[0],1),predict_mean_va)\n",
+    "yhat_te = np.full((y_te_NF.shape[0],1),predict_mean_te)\n",
+    "\n",
+    "mse_mean_tr = calc_perf_metric__squared_error(y_tr_NF, yhat_tr)\n",
+    "mse_mean_va = calc_perf_metric__squared_error(y_va_NF, yhat_va)\n",
+    "mse_mean_te = calc_perf_metric__squared_error(y_te_NF, yhat_te)\n",
+    "\n",
+    "print(mse_mean_tr, mse_mean_va, mse_mean_te)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[11.08879093] [11.994] [11.602]\n"
+     ]
+    }
+   ],
+   "source": [
+    "median_value_predictor = MedianPredictor()\n",
+    "median_value_predictor.fit(x_tr_NF,y_tr_NF)\n",
+    "## TODO fit the predictor\n",
+    "predict_median_tr = median_value_predictor.predict(x_tr_NF)\n",
+    "predict_median_va = median_value_predictor.predict(x_va_NF)\n",
+    "predict_median_te = median_value_predictor.predict(x_te_NF)\n",
+    "\n",
+    "## TODO evaluate predictions on train, valid, and test\n",
+    "yhat_tr_med = np.full((y_tr_NF.shape[0],1),predict_median_tr)\n",
+    "yhat_va_med = np.full((y_va_NF.shape[0],1),predict_median_va)\n",
+    "yhat_te_med = np.full((y_te_NF.shape[0],1),predict_median_te)\n",
+    "\n",
+    "mse_median_tr = calc_perf_metric__squared_error(y_tr_NF, yhat_tr_med)\n",
+    "mse_median_va = calc_perf_metric__squared_error(y_va_NF, yhat_va_med)\n",
+    "mse_median_te = calc_perf_metric__squared_error(y_te_NF, yhat_te_med)\n",
+    "\n",
+    "print(mse_median_tr, mse_median_va, mse_median_te)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1c : Results Table for Abalone MSE\n",
+    "\n",
+    "#### **1c:** Make a table of the **mean-squared-error** for each of the MeanPredictor and MedianPredictor predictors when evaluated on all 3 dataset splits (training, validation, and test).\n",
+    "\n",
+    "\n",
+    "**Mean Squared Error:**\n",
+    "\n",
+    "| split |  guess-mean | guess-median |\n",
+    "| ----- | ----------- | ------------ |\n",
+    "| train |    10.274   |     11.089       \n",
+    "| valid |    10.949   |     11.994\n",
+    "| test  |    10.565   |     11.602\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Model fitting code for 1d"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "6.51749878831106\n"
+     ]
+    }
+   ],
+   "source": [
+    "linear_regressor_2feats = LeastSquaresLinearRegressor()\n",
+    "linear_regressor_2feats.fit(feature2_tr, y_tr_NF)\n",
+    "yhat_2f = linear_regressor_2feats.predict(feature2_va)\n",
+    "mse_2feat = calc_perf_metric__squared_error(y_va_NF, yhat_2f)\n",
+    "print(mse_2feat)\n",
+    "# TODO fit and evaluate"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "5.10982385799375\n"
+     ]
+    }
+   ],
+   "source": [
+    "linear_regressor_8feats = LeastSquaresLinearRegressor()\n",
+    "linear_regressor_8feats.fit(x_tr_NF, y_tr_NF)\n",
+    "yhat_8f = linear_regressor_8feats.predict(x_va_NF)\n",
+    "mse_8feat = calc_perf_metric__squared_error(y_va_NF, yhat_8f)\n",
+    "print(mse_8feat)\n",
+    "# TODO fit and evaluate"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 1d : Results Table for Mean Squared Error on Abalone\n",
+    "\n",
+    "\n",
+    "**Mean Squared Error:**\n",
+    "\n",
+    "| split |  guess mean | guess median | linear regr (2 feats) | linear regr (8 feats)\n",
+    "| ----- | ----------- | ------------ | --------------------- | ---------------------\n",
+    "| train |       \n",
+    "| valid |\n",
+    "| test  |"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1d(iii):** Does using more features seem worthwhile? Do you think the improvement on the test data is significant? Why or why not?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 1e: Linear Regression Coef Interpretation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1e(i): Show the learned coefficients for the \"2 features\" dataset."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO linear_regressor_2feats.print_weights_in_sorted_order(...)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1e(ii): Show the learned coefficients for the \"8 features\" dataset."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO linear_regressor_8feats.print_weights_in_sorted_order(...)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 1e(iii): Do the values (signs, magnitudes) of the coefficients for diameter and shucked weight make sense, esp. given the scatter plots in 1b?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**TODO  ANSWER HERE**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 1e : Model selection for K-Nearest Neighbor Regressor"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "param_name = 'n_neighbors'\n",
+    "param_list = [1, 3, 5, 7, 11, 21, 41, 61, 81, 101, 201, 401, 801] # TODO ADD N\n",
+    "# Keep only values below total training size\n",
+    "param_list = [p for p in param_list if p <= param_list[-1]]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "train_mse_list = []\n",
+    "valid_mse_list = []\n",
+    "test_mse_list = []\n",
+    "for n_neighbors in param_list:\n",
+    "    knn_regr = sklearn.neighbors.KNeighborsRegressor(\n",
+    "        n_neighbors=n_neighbors,\n",
+    "        metric='euclidean',\n",
+    "        algorithm='brute')\n",
+    "    # TODO fit and predict and track perf values in the lists"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1e(i):** Make a line plot for mean-squared-error (MSE) vs $K$ on the validation set"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1e(i):** Make a ZOOMED IN line plot for mean-squared-error (MSE) vs $K$ on the validation set"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO code here"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1e(ii):** Which value do you recommend?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1e(iii):** Cumulative results table with K-Nearest Neighbor"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Mean Squared Error:**\n",
+    "\n",
+    "| split |  guess mean | guess median | linear regr (2 feats) | linear regr (8 feats) | k-NN (8 feats)  |\n",
+    "| ----- | ----------- | ------------ | --------------------- | --------------------- | ----- |\n",
+    "| train |   \n",
+    "| valid | \n",
+    "| test  |"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# <a name=\"problem-1-g\"> 1G: Analyzing Residuals"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO compute the predicted y values for linear regr and kNN"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1f(i):** Plot scatters of y vs yhat for linear regression and the best k-NN regressor\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig_h, ax_grid = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)\n",
+    "plt.xlim([0, 26]); plt.ylim([0, 26]);\n",
+    "\n",
+    "# ax_grid[0].plot(y_va_N, linear_yhat_va_N, 'k.', alpha=0.2);\n",
+    "ax_grid[0].set_title('Linear Regr.'); plt.xlabel('true y'); plt.ylabel('predicted y');\n",
+    "\n",
+    "# ax_grid[1].plot(y_va_N, knn_yhat_va_N, 'k.', alpha=0.2);\n",
+    "plt.title('k-NN Regr.'); plt.xlabel('true y'); plt.ylabel('predicted y');"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **1f(ii):** What kinds of systematic errors does each method make? What should be done about these?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "TODO ANSWER HERE"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Problem 2 : Analysis of Doctor Visits"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO load data here\n",
+    "y_tr_DV = np.loadtxt('data_doctorvisits/y_train.csv', delimiter=',', skiprows=1)\n",
+    "y_va_DV = np.loadtxt('data_doctorvisits/y_valid.csv', delimiter=',', skiprows=1)\n",
+    "y_te_DV = np.loadtxt('data_doctorvisits/y_test.csv', delimiter=',', skiprows=1)\n",
+    "x_tr_DV = np.loadtxt('data_doctorvisits/x_train.csv', delimiter=',', skiprows=1)\n",
+    "x_va_DV = np.loadtxt('data_doctorvisits/x_valid.csv', delimiter=',', skiprows=1)\n",
+    "x_te_DV = np.loadtxt('data_doctorvisits/x_test.csv', delimiter=',', skiprows=1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2a: Histogram of Number of Doctor Visits per year"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**2a(i):** Produce one figure with three subplots, showing histograms of the $y$ values on training, validation, and test sets."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig_h, axes_arr = plt.subplots(nrows=3, ncols=1, sharex=True)\n",
+    "sns.distplot(y_tr_DV, kde=False, rug=True, ax=axes_arr[0]);\n",
+    "sns.distplot(y_va_DV, kde=False, rug=True, ax=axes_arr[1]);\n",
+    "sns.distplot(y_te_DV, kde=False, rug=True, ax=axes_arr[2]);\n",
+    "## TODO plot histograms on the axes\n",
+    "## e.g. sns.distplot(y_tr_N, kde=False, rug=True, ax=axes_arr[0]);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **2a(ii):** Describe the **training** distribution: unimodal or multimodal? What shape?\n",
+    "\n",
+    "TODO ANSWER HERE"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **2a(iii):** Training statistics: What is the mean? The median? Minimum value? Maximum value? Most common value?\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2b : Scatter plots looking at number of visits vs age and number of conditions"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **2b(i):** Scatter plots"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO PLOTTING CODE HERE"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2c : Baseline predictions"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **2c(i):** Given stakeholder's preferences, which error metric is most appropriate and why?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Because errors should scale linearly, we should use the *mean absolute error* metric.\n",
+    "\n",
+    "If we used mean squared error, an error of 2 would cost 4x an error of 1."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "mean_value_predictor = MeanPredictor()\n",
+    "mean_value_predictor.fit(x_tr_DV,y_tr_DV)\n",
+    "\n",
+    "## TODO fit and predict..."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "median_value_predictor = MedianPredictor()\n",
+    "## TODO fit and predict..."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2c(ii) : Results Table for Doctor Visits with Mean Absolute Error\n",
+    "\n",
+    "**Mean Absolute Error:**\n",
+    "\n",
+    "| split |  guess-mean | guess-median |\n",
+    "| ----- | ----------- | ------------ |\n",
+    "| train |      \n",
+    "| valid |  \n",
+    "| test  | "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Setup code for 2d"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "linear_regressor_2feats = LeastSquaresLinearRegressor()\n",
+    "# TODO fit and predict"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "linear_regressor_10feats = LeastSquaresLinearRegressor()\n",
+    "# TODO fit and predict"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "** 2d(i) and 2d(ii):** Add LR to Results Table for MAE on DoctorVisits"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Mean Absolute Error:**\n",
+    "\n",
+    "| split |  guess-mean | guess-median | linear regr (2 feats) | linear regr (10 feats) |\n",
+    "| ----- | ----------- | ------------ | --------------------- | ---------------------- |\n",
+    "| train |    \n",
+    "| valid |    \n",
+    "| test  |    "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2e : DecisionTreeRegressor "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "param_name = 'min_samples_leaf'\n",
+    "param_list = [1, 2, 3, 4, 5, 10, 20, 50, 100, 200, 500, 1000] # TODO add size of training set"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "train_mae_list = []\n",
+    "valid_mae_list = []\n",
+    "test_mae_list = []\n",
+    "for param in param_list:\n",
+    "    tree_regr = sklearn.tree.DecisionTreeRegressor(\n",
+    "        min_samples_leaf=param,\n",
+    "        random_state=42)\n",
+    "    # Fit, predict, and track perf metrics..."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2e(i): Line plot of mean absolute error vs min_samples_leaf"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO plot results"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### **2e(ii):** Which value of min_samples_leaf would you recommend?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2e(iii): Add a column to the results table for MAE on DoctorVisits"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Mean Absolute Error:**\n",
+    "\n",
+    "\n",
+    "| split |  guess-mean | guess-median | linear regr (2 feats) | linear regr (10 feats) | decision tree\n",
+    "| ----- | ----------- | ------------ | --------------------- | ---------------------- | --- |\n",
+    "| train |    \n",
+    "| valid |    \n",
+    "| test  |    "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 2f : DecisionTreeRegressor with MAE Training Criterion"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "train_mae_list = []\n",
+    "valid_mae_list = []\n",
+    "test_mae_list = []\n",
+    "for param in param_list:\n",
+    "    tree_regr = sklearn.tree.DecisionTreeRegressor(\n",
+    "        criterion='mae', # USE MEAN ABSOLUTE ERROR here\n",
+    "        min_samples_leaf=param,\n",
+    "        random_state=42)\n",
+    "    # TODO fit, predict, and track perf metrics"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2f(i): Line plot of mean absolute error vs min_samples_leaf"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2f(ii): Which value would you recommend?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Setup for 2f(iii)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 2f(iii): Add a column to the results table for MAE on DoctorVisits\n",
+    "\n",
+    "\n",
+    "**Mean Absolute Error:**\n",
+    "\n",
+    "\n",
+    "| split |  guess-mean | guess-median | linear regr (2 feats) | linear regr (10 feats) | decision tree (MSE) | decision tree (MAE)\n",
+    "| ----- | ----------- | ------------ | --------------------- | ---------------------- | --- | --- |\n",
+    "| train |    \n",
+    "| valid |    \n",
+    "| test  |    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Problem 3: Concept questions"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 3a: Limits of $K$-NN\n",
+    "\n",
+    "**Question**: When $K$ equals the total training set size $N$, the $K$-nearest-neighbor regression algorithm approaches the behavior of which other regression method discussed here?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3a Answer:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 3b: Modifications of $K$-NN\n",
+    "\n",
+    "**Question**: Suppose in problem 2, when trying to minimize *mean absolute error* on heldout data, that instead of a DecisionTreeRegressor, we had used a $K$-NN regressor with Euclidean distance (as in Problem 1f).  \n",
+    "\n",
+    "Would we expect $K$-NN with large $K$ to always beat the strongest constant-prediction baseline (e.g. guess-median or guess-mean)?\n",
+    "\n",
+    "To get better MAE values using a nearest-neighbor like approach, should we change the distance function used to compute neighbors? Would we need to change some other step of the $K$-NN prediction process?\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3b Answer:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "TODO"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 3c: Linear Regression with Categorical Features\n",
+    "\n",
+    "**Question:** Your colleague trains a linear regression model on a subset of the DoctorVisits data using only the `has_medicaid` and `has_private_insurance` features. Thus, all features in the vector have a binary categorical type and can be represented via a redundant one-hot encoding. \n",
+    "\n",
+    "To your dismay, you discover that your colleague failed to include a bias term (aka intercept term) when training the weights. You recall from class that including a bias term can be important.\n",
+    "\n",
+    "To be concrete, you wish each example $x_i$ was represented as a (bias-included) vector:\n",
+    "$$\n",
+    "x_i = [\n",
+    "    \\texttt{has_medicaid}\n",
+    "    \\quad \\texttt{has_private_insurance}\n",
+    "    \\quad 1\n",
+    "] \\quad \\quad \\quad ~\n",
+    "$$\n",
+    "\n",
+    "However, your colleague used the following representation:\n",
+    "$$\n",
+    "\\tilde{x}_i = [\n",
+    "    \\texttt{has_medicaid}\n",
+    "    \\quad \\texttt{not(has_medicaid)}\n",
+    "    \\quad \\texttt{has_private_insurance}\n",
+    "    \\quad \\texttt{not(has_private_insurance)} \n",
+    "]\n",
+    "$$\n",
+    "\n",
+    "Your colleague has delivered to you a length-4 feature vector $\\tilde{w}$ for the 4 features above, but then left for vacation without giving you access to the training data.\n",
+    "\n",
+    "Can you manipulate the $\\tilde{w}$ vector to estimate an appropriate $w$ and $b$ such that for all possible inputs $x_i$:\n",
+    "\n",
+    "$$\n",
+    "    w^T x_i + b = \\tilde{w}^T \\tilde{x}_i\n",
+    "$$"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### 3c Answer:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "TODO"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "anaconda-cloud": {},
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.8"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
