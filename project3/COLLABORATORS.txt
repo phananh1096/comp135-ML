@@ -1,0 +1,4 @@
+Name: Phan Anh Nguyen
+I spent 20 hours on this problem (3 on Prob 1, 5 on Prob 2, 5 on problem 3, 5 on problem 4, and 2 on Prob. 3)
+
+I sought help from TA Manh Duc Nguyen and classmates Stephanie Wong. We discussed the implications of using simply mean-guessing or mean-guessing + bias predictions on the optimization process as well as the behavior of SVD for implementations I'm Problem 4 and 5. 
