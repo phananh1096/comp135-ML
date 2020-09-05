@@ -1,0 +1,5 @@
+Name: Phan Nguyen (1182452)
+I spent roughly 3 hours on this problem 
+
+I discussed theoretical concepts for ReLU, LogisticSigmoid, L-BFGS and SGD with Stephanie Wong. We talked about the workings behind each model and potential advantages/drawbacks
+
